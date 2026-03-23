@@ -12,7 +12,7 @@
  */
 
 /*
- Ponteiro structs opaca.
+ Ponteiro structs opaco.
  */
 typedef struct Diretorio Diretorio;
 typedef struct Conteudo Conteudo;
