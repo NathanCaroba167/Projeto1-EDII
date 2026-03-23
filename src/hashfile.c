@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "hashfile.h"
+#include "../include/hashfile.h"
 
 #define CAPACIDADE_BUCKET 3
 
@@ -54,7 +54,7 @@ void inserirHash(Diretorio* dir, Conteudo* conteudo) {
     int indice = getHashIndex(valorHash, dir->profundidade_global);
     Bucket* b = dir->buckets[indice];
 
-    if (b-> contador < CAPACIDADE_BUCKET) {
+    if (b->contador < CAPACIDADE_BUCKET) {
         b->conteudo[b->contador] = *conteudo;
         b->contador++;
         return;
@@ -106,6 +106,18 @@ void inserirHash(Diretorio* dir, Conteudo* conteudo) {
 
 }
 
+void removerHash(Diretorio* dir, Conteudo* cont) {
+    int valorHash = funcaoHash(cont->codigo);
+    int indice = getHashIndex(valorHash, dir->profundidade_global);
+    Bucket* b = dir->buckets[indice];
+
+    for (int i = 0; i < b->contador; i++) {
+        if (b->conteudo[i].codigo == cont->codigo) {
+            free(cont);
+        }
+    }
+}
+
 bool getHash(Diretorio* dir, int codigo, Conteudo** conteudo) {
     int valorHash = funcaoHash(codigo);
     int indice = getHashIndex(valorHash, dir->profundidade_global);
@@ -119,29 +131,6 @@ bool getHash(Diretorio* dir, int codigo, Conteudo** conteudo) {
         }
     }
     return false;
-}
-
-void liberarHash(Diretorio* dir) {
-    if (dir == NULL) return;
-
-    for (int i = 0; i < dir->tamanho_diretorio; i++) {
-        if (dir->buckets[i] != NULL) {
-            Bucket* b_to_free = dir->buckets[i];
-
-            for (int j = i + 1; j < dir->tamanho_diretorio; j++) {
-                if (dir->buckets[j] == b_to_free) {
-                    dir->buckets[j] = NULL;
-                }
-            }
-
-            free(b_to_free);
-            dir->buckets[i] = NULL;
-        }
-    }
-
-    free(dir->buckets);
-
-    free(dir);
 }
 
 Conteudo* criarConteudo(int codigo) {
@@ -168,6 +157,29 @@ int getContadorBucket(Diretorio* dir, int indice) {
 int getCodigoConteudo(Conteudo* cont) {
     if(cont == NULL) return -1;
     return cont->codigo;
+}
+
+void liberarHash(Diretorio* dir) {
+    if (dir == NULL) return;
+
+    for (int i = 0; i < dir->tamanho_diretorio; i++) {
+        if (dir->buckets[i] != NULL) {
+            Bucket* b_to_free = dir->buckets[i];
+
+            for (int j = i + 1; j < dir->tamanho_diretorio; j++) {
+                if (dir->buckets[j] == b_to_free) {
+                    dir->buckets[j] = NULL;
+                }
+            }
+
+            free(b_to_free);
+            dir->buckets[i] = NULL;
+        }
+    }
+
+    free(dir->buckets);
+
+    free(dir);
 }
 
 
