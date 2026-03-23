@@ -39,4 +39,16 @@ bool getHash(Diretorio* dir, int codigo, Conteudo** cont_clone);
 /// @return
 void liberarHash(Diretorio* dir);
 
+Conteudo* criarConteudo(int codigo);
+
+int getProfundidadeGlobal(Diretorio* dir);
+
+int getTamanhoDiretorio(Diretorio* dir);
+
+int getContadorBucket(Diretorio* dir, int indice);
+
+int getCodigoConteudo(Conteudo* cont);
+
+
+
 #endif //HASHFILE_H

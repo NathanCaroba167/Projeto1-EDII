@@ -11,7 +11,7 @@
 
 typedef struct Conteudo{
     int codigo;
-} Conteudo;
+}Conteudo;
 
 typedef struct {
     int profundidade_local;
@@ -50,12 +50,12 @@ Diretorio* criarHash() {
 }
 
 void inserirHash(Diretorio* dir, Conteudo* conteudo) {
-    int valorHash = funcaoHash(conteudo.codigo);
+    int valorHash = funcaoHash(conteudo->codigo);
     int indice = getHashIndex(valorHash, dir->profundidade_global);
     Bucket* b = dir->buckets[indice];
 
     if (b-> contador < CAPACIDADE_BUCKET) {
-        b->conteudo[b->contador] = conteudo;
+        b->conteudo[b->contador] = *conteudo;
         b->contador++;
         return;
     }
@@ -68,11 +68,11 @@ void inserirHash(Diretorio* dir, Conteudo* conteudo) {
 
         dir->buckets = (Bucket**)realloc(dir->buckets, sizeof(Bucket*) * dir->tamanho_diretorio);
         if (dir->buckets == NULL) {
-            printf("Erro Crítico: Falha no realloc do diretório!\n");
+            printf("Erro: Falha no realloc do diretório!\n");
             exit(1);
         }
 
-        for (int i = 0; i < dir->tamanho_diretorio; i++) {
+        for (int i = 0; i <tamanho_antigo; i++){
             dir->buckets[i + tamanho_antigo] = dir->buckets[i];
         }
     }
@@ -84,7 +84,7 @@ void inserirHash(Diretorio* dir, Conteudo* conteudo) {
 
     int mask = 1 << profundidade_local_antigo;
 
-    for (int i = 0; i < profundidade_local_antigo; i++) {
+    for (int i = 0; i < dir->tamanho_diretorio; i++) {
         if (dir->buckets[i] == b) {
             if ((i & mask) != 0) {
                 dir->buckets[i] = novo_bucket;
@@ -99,7 +99,7 @@ void inserirHash(Diretorio* dir, Conteudo* conteudo) {
     b->contador = 0;
 
     for (int i = 0; i < CAPACIDADE_BUCKET; i++) {
-        inserirHash(dir, conteudo_temp[i]);
+        inserirHash(dir,&conteudo_temp[i]);
     }
 
     inserirHash(dir,conteudo);
@@ -113,14 +113,15 @@ bool getHash(Diretorio* dir, int codigo, Conteudo** conteudo) {
 
     for (int i = 0; i < b->contador; i++) {
         if (b->conteudo[i].codigo == codigo) {
-            *conteudo = b->conteudo[i];
+            *conteudo = (Conteudo*) malloc(sizeof(Conteudo));
+            **conteudo = b->conteudo[i];
             return true;
         }
     }
     return false;
 }
 
-void hash_free(Diretorio* dir) {
+void liberarHash(Diretorio* dir) {
     if (dir == NULL) return;
 
     for (int i = 0; i < dir->tamanho_diretorio; i++) {
@@ -141,6 +142,32 @@ void hash_free(Diretorio* dir) {
     free(dir->buckets);
 
     free(dir);
+}
+
+Conteudo* criarConteudo(int codigo) {
+    Conteudo* novo = (Conteudo*) malloc(sizeof(Conteudo));
+    novo->codigo = codigo;
+    return novo;
+}
+
+int getProfundidadeGlobal(Diretorio* dir) {
+    if(dir == NULL) return -1;
+    return dir->profundidade_global;
+}
+
+int getTamanhoDiretorio(Diretorio* dir) {
+    if(dir == NULL) return -1;
+    return dir->tamanho_diretorio;
+}
+
+int getContadorBucket(Diretorio* dir, int indice) {
+    if(dir == NULL || indice < 0 || indice >= dir->tamanho_diretorio) return -1;
+    return dir->buckets[indice]->contador;
+}
+
+int getCodigoConteudo(Conteudo* cont) {
+    if(cont == NULL) return -1;
+    return cont->codigo;
 }
 
 
