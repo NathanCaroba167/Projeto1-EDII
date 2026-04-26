@@ -65,7 +65,7 @@ void desenharCirculoSVG(Arquivo svg, double x, double y);
 /// @param y Coordenada y do canto superior esquerdo do quadrado.
 /// @param Cpf Cpf a ser inserido dentro do quadrado.
 /// @warning
-void desenharQuadradoSVG(Arquivo svg, double x, double y, char* Cpf);
+void desenharQuadradoVermelhoSVG(Arquivo svg, double x, double y, char* Cpf);
 
 /// @brief Desenha um X vermelho no arquivo SVG.
 /// @param svg Ponteiro para o arquivo que receberá o desenho.
