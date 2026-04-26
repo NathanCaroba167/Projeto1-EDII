@@ -8,12 +8,12 @@
 #include <stdbool.h>
 #include <errno.h>
 
-#include "../include/hashfile.h"
 #include "../include/habitante.h"
 #include "../include/pm.h"
 
 #define TAMANHO_MAX_BUFFER 256
 #define MAX_CAMINHO_PM 512
+#define TAMANHO_MAX_BUFFER_REGISTRO 1024
 
 typedef struct {
     char path[MAX_CAMINHO_PM];
@@ -48,7 +48,7 @@ int criarHabitantesEMoradores(Arquivo p, HashFile hfHabitantes) {
     }
 
     char buffer[TAMANHO_MAX_BUFFER];
-    char bufferRegistro[1024];
+    char bufferRegistro[TAMANHO_MAX_BUFFER_REGISTRO];
     int inseridos = 0;
     int moradores = 0;
 
@@ -74,7 +74,17 @@ int criarHabitantesEMoradores(Arquivo p, HashFile hfHabitantes) {
                 char sexo = sexo_temp[0];
 
                 Habitante hab = criarHabitante(cpf, nome, sobrenome, sexo, nascimento);
-                inserirHashFile(hfHabitantes, hab);
+                if (hab == NULL) {
+                    continue;
+                }
+
+                habitanteBufferParaRegistro(hab, bufferRegistro);
+
+                if (inserirHashFile(hfHabitantes, bufferRegistro) == 0) {
+                    inseridos++;
+                }
+
+                eliminarHabitante(hab);
             }
         }else if (strcmp(comando, "m") == 0) {
             char* cpf = strtok(NULL," ");
@@ -93,9 +103,20 @@ int criarHabitantesEMoradores(Arquivo p, HashFile hfHabitantes) {
                 char face = face_temp[0];
                 int num = atoi(num_temp);
 
-                buscarHashFile(hfHabitantes, cpf, bufferRegistro);
-                atualizarHashFile(hfHabitantes, bufferRegistro);
-                moradores++;
+                if (buscarHashFile(hfHabitantes, cpf, bufferRegistro) != 0) {
+                    continue;
+                }
+                Habitante hab = registroParaHabitanteBuffer(bufferRegistro);
+                if (hab == NULL) {
+                    continue;
+                }
+
+                setEnderecoHabitante(hab, cep, face, num, complemento);
+                habitanteBufferParaRegistro(hab, bufferRegistro);
+
+                if (atualizarHashFile(hfHabitantes, bufferRegistro) == 0) {
+                    moradores++;
+                }
 
                 eliminarHabitante(hab);
             }
@@ -106,6 +127,7 @@ int criarHabitantesEMoradores(Arquivo p, HashFile hfHabitantes) {
     fclose(arquivoPm);
     pm->numeroHabitantes = inseridos;
     pm->numeroMoradores = moradores;
+    printf("DEBUB: numero de habitantes: %d e Moradores: %d",pm->numeroHabitantes,pm->numeroMoradores);
     return inseridos;
 }
 
