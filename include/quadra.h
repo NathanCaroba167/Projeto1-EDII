@@ -5,6 +5,8 @@
 #ifndef QUADRA_H
 #define QUADRA_H
 
+#include "hashfile.h"
+
 /*
  Módulo encarregado de coordenar uma quadra com operações de criar, get, set e eliminar
  */
@@ -20,11 +22,9 @@ typedef void* Quadra;
 /// @param y Coordenada y do ponto âncora (canto inferior esquerdo) da quadra.
 /// @param w Largura do quadra.
 /// @param h Altura do quadra.
-/// @param corB Cor de borda da quadra no padrão RGB (Ex: #FFFFFF).
-/// @param corP Cor de preenchimento da quadra no padrão RGB (Ex: #AA543B).
 /// @return Ponteiro para o quadra criado.
 /// @warning
-Quadra CriarQuadra(char* cep,double x,double y,double w,double h,char* corB,char* corP );
+Quadra criarQuadra(char* cep,double x,double y,double w,double h);
 
 /// @brief Pega o CEP da quadra sem modifica-lo.
 /// @param q Ponteiro para o quadra analisada.
@@ -121,6 +121,18 @@ double getSWQuadra(Quadra q);
 /// @param sw Nova espessura da borda
 /// @warning
 void setSWQuadra(Quadra q,double sw);
+
+/// @brief Cria um HashFileConfig configurada para o registro de quadras.
+/// @param capacidadeBucket Capacidade de registros por bucket.
+/// @return HashFileConfig configurada para registrar quadras.
+/// @warning
+HashFileConfig criarHashFileConfigQuadras(int capacidadeBucket);
+
+/// @brief Cria uma quadra a partir de um buffer de registro lido do hashfile
+/// @param buffer Buffer de registro lido do hashfile.
+/// @return Ponteiro para a quadra criada.
+/// @warning
+Quadra registroParaQuadraBuffer(void* buffer);
 
 /// @brief Libera a memória alocada para a quadra, incluindo as strings de cor.
 /// @param q Ponteiro para o quadra que será eliminado.

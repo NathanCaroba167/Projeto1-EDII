@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include <math.h>
 #include <errno.h>
 
@@ -131,6 +132,27 @@ double getSWQuadra(Quadra q) {
 
 void setSWQuadra(Quadra q, double sw) {
     ((quadra*) q)->sw = sw;
+}
+
+void formatoQuadra(void* registro, char* buffer, size_t tamanhoBuffer) {
+    quadra* q = (quadra*)registro;
+    snprintf(buffer, tamanhoBuffer, "%s | %.2f | %.2f | %.2f | %.2f | %.2f | %s | %s ",q->cep, q->x, q->y, q->w, q->h, q->sw, q->corP, q->corB);
+
+}
+
+HashFileConfig criarHashFileConfigQuadras(int capacidadeBucket) {
+    return criarHashFileConfig(sizeof(quadra), offsetof(quadra,cep), sizeof(((quadra*)0)->cep), capacidadeBucket, formatoQuadra);
+}
+
+Quadra registroParaQuadraBuffer(void* buffer) {
+    quadra* quadraBuffer = calloc(1, sizeof(quadra));
+    if(quadraBuffer == NULL) {
+        return NULL;
+    }
+
+    memcpy(quadraBuffer, buffer, sizeof(quadra));
+
+    return quadraBuffer;
 }
 
 void eliminarQuadra(Quadra q) {
