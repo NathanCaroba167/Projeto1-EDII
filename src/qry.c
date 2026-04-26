@@ -18,7 +18,7 @@
 
 #define TAMANHO_MAX_BUFFER 256
 #define TAMANHO_MAX_BUFFER_REGISTRO 1024
-#define MAX_CPF 10
+#define MAX_CPF 20
 
 typedef struct {
     char* cepRemovido;
@@ -182,8 +182,9 @@ void comandoRq(char* cep, HashFile hfQuadras, HashFile hfHabitantes, Arquivo svg
         if (buscarHashFile(hfHabitantes, cm.cpfs[i], buffer) == 0) {
             Habitante hab = registroParaHabitanteBuffer(buffer);
             if (hab != NULL) {
+                fprintf(txt, "%s %s\n", getCPFHabitante(hab), getNomeHabitante(hab));
                 removerEnderecoHabitante(hab);
-                //txt
+                habitanteBufferParaRegistro(hab, buffer);
                 atualizarHashFile(hfHabitantes, buffer);
                 eliminarHabitante(hab);
             }
@@ -197,7 +198,7 @@ void comandoRq(char* cep, HashFile hfQuadras, HashFile hfHabitantes, Arquivo svg
     }
 }
 
-void comandoPq(char* cep, HashFile hfQuadras, HashFile hfHabitantes, Arquivo svg) {
+void comandoPq(char* cep, HashFile hfQuadras, HashFile hfHabitantes, Arquivo svg, Arquivo txt) {
     char buffer[TAMANHO_MAX_BUFFER_REGISTRO];
 
     if (buscarHashFile(hfQuadras, cep, buffer) != 0) {
@@ -218,7 +219,7 @@ void comandoPq(char* cep, HashFile hfQuadras, HashFile hfHabitantes, Arquivo svg
     percorrerHash(hfHabitantes,callbackContagemMoradores, &cm);
     int total = cm.norte + cm.sul + cm.leste + cm.oeste;
 
-    //txt
+    fprintf(txt, "N:%d S:%d L:%d O:%d Total:%d\n", cm.norte, cm.sul, cm.leste, cm.oeste, total);
 
     if (svg) {
         char stringNumero[16];
@@ -242,15 +243,14 @@ void comandoCenso(HashFile hfHabitantes, Arquivo txt) {
     Censo c = {0};
     percorrerHash(hfHabitantes, callbackCenso, &c);
 
-    //txt
-
+    escreverCenso(txt, c.totalHabitantes, c.totalMoradores, c.homens, c.mulheres, c.moradoresHomens, c.moradoresMulheres, c.semTeto, c.semTetoHomens, c.semTetoMulheres);
 }
 
 void comandoHinterrogacao(char* cpf, HashFile hfHabitante, Arquivo txt){
     char buffer[TAMANHO_MAX_BUFFER_REGISTRO];
 
     if (buscarHashFile(hfHabitante, cpf, buffer) != 0) {
-        //txt
+        fprintf(txt, "Habitante nao encontrado\n");
         return;
     }
 
@@ -259,7 +259,7 @@ void comandoHinterrogacao(char* cpf, HashFile hfHabitante, Arquivo txt){
         return;
     }
 
-    //txt
+    escreverHabitante(txt, getCPFHabitante(hab), getNomeHabitante(hab), getSobrenomeHabitante(hab), getSexoHabitante(hab), getNascHabitante(hab), isMorador(hab), getCEPEnderecoHabitante(hab), getFaceEnderecoHabitante(hab), getNumeroEnderecoHabitante(hab), getComplementoHabitante(hab));
 
     eliminarHabitante(hab);
 
@@ -272,19 +272,18 @@ void comandoNasc(char* cpf, char* nome, char* sobrenome, char sexo, char* nascim
     }
 
     char buffer[TAMANHO_MAX_BUFFER_REGISTRO];
-    habitantePara;
+    habitanteBufferParaRegistro(hab,buffer);
     inserirHashFile(hfHabitantes, buffer);
     eliminarHabitante(hab);
 
-    //txt
-
+    fprintf(txt, "Nascimento habitante: %s\n", cpf);
 }
 
 void comandoRip(char* cpf, HashFile hfHabitantes, Arquivo svg, Arquivo txt) {
     char buffer[TAMANHO_MAX_BUFFER_REGISTRO];
 
     if (buscarHashFile(hfHabitantes, cpf, buffer) != 0) {
-        //txt
+        fprintf(txt, "Habitante nao encontrado\n");
         return;
     }
 
@@ -293,7 +292,7 @@ void comandoRip(char* cpf, HashFile hfHabitantes, Arquivo svg, Arquivo txt) {
         return;
     }
 
-    //txt
+    escreverHabitante(txt, getCPFHabitante(hab), getNomeHabitante(hab), getSobrenomeHabitante(hab), getSexoHabitante(hab), getNascHabitante(hab), isMorador(hab), getCEPEnderecoHabitante(hab), getFaceEnderecoHabitante(hab), getNumeroEnderecoHabitante(hab), getComplementoHabitante(hab));
 
     if (svg && isMorador(hab)) {
         desenharCruzSVG(svg, getNumeroEnderecoHabitante(hab), 0.0);
@@ -316,7 +315,7 @@ void comandoMud(char* cpf, char* cep, char face, int numero, char* complemento, 
     }
 
     setEnderecoHabitante(hab, cep, face, numero, complemento);
-    habitante;
+    habitanteBufferParaRegistro(hab, buffer);
     atualizarHashFile(hfHabitantes, buffer);
 
     if (svg) {
@@ -327,12 +326,12 @@ void comandoMud(char* cpf, char* cep, char face, int numero, char* complemento, 
                 double px;
                 double py;
                 posicaoFaceNaQuadra(getXQuadra(q), getYQuadra(q), getWQuadra(q), getHQuadra(q), face, &px, &py);
-                desenharQuadradoSVG(svg, px, py, cpf);
+                desenharQuadradoVermelhoSVG(svg, px, py, cpf);
                 eliminarQuadra(q);
             }
         }
     }
-    //txt
+    fprintf(txt, "Mudanca do Morador: %s\n", cpf);
     eliminarHabitante(hab);
 }
 
@@ -340,7 +339,7 @@ void comandoDspj(char* cpf, HashFile hfQuadras, HashFile hfHabitantes, Arquivo s
     char buffer[TAMANHO_MAX_BUFFER_REGISTRO];
 
     if (buscarHashFile(hfHabitantes, cpf, buffer) != 0) {
-        //txt
+        fprintf(txt, "Habitante nao encontrado\n");
         return;
     }
 
@@ -349,7 +348,7 @@ void comandoDspj(char* cpf, HashFile hfQuadras, HashFile hfHabitantes, Arquivo s
         return;
     }
 
-    //txt
+    escreverHabitante(txt, getCPFHabitante(hab), getNomeHabitante(hab), getSobrenomeHabitante(hab), getSexoHabitante(hab), getNascHabitante(hab), isMorador(hab), getCEPEnderecoHabitante(hab), getFaceEnderecoHabitante(hab), getNumeroEnderecoHabitante(hab), getComplementoHabitante(hab));
 
     if (svg && isMorador(hab)) {
         char bufferQuadra[TAMANHO_MAX_BUFFER_REGISTRO];
@@ -366,7 +365,7 @@ void comandoDspj(char* cpf, HashFile hfQuadras, HashFile hfHabitantes, Arquivo s
     }
 
     removerEnderecoHabitante(hab);
-    habitante;
+    habitanteBufferParaRegistro(hab,buffer);
     atualizarHashFile(hfHabitantes, buffer);
     eliminarHabitante(hab);
 
@@ -413,7 +412,7 @@ void LerComandosExecutar(Arquivo svg,Arquivo txt,Arquivo qry,HashFile hfQuadras,
             char* cep = strtok(NULL," ");
 
             if (cep) {
-                comandoPq(cep, hfQuadras, hfHabitantes, svg);
+                comandoPq(cep, hfQuadras, hfHabitantes, svg, txt);
                 executados++;
             }
         }else if (strcmp(comando, "censo") == 0) {
