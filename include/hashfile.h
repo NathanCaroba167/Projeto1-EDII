@@ -6,6 +6,7 @@
 #define HASHFILE_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 /*
  Módulo encarregado de gerenciar um Hashfile Dinâmino (Hashing Extensível) em disco(arquivo binário),
@@ -16,26 +17,28 @@
 /* Códigos de retorno das operações*/
 #define HF_OK 0
 
-#define HF_ERROR -1
+#define HF_ERROR (-1)
 
+typedef void (*FuncaoFormatoRegistroDump)(void* registro, char* buffer, size_t tamanhoBuffer);
 
 /*
- Ponteiro structs opaco.
+ Ponteiro void*.
  */
 typedef void* HashFileConfig;
 typedef void* HashFile;
 
+/*typedef FILE* Arquivo;*/
 typedef char* Nome;
 
 /// @brief Cria uma configuração para o uso do HashFile
 /// @param record_size Tamanho total de um registro em bytes
 /// @param key_offset Deslocamento em bytes da chave dentro do registro
 /// @param key_size Tamanho da chave em bytes
-/// @param dir_offset Deslocamento em bytes do início do diretorio dentro do arquivo .hfc
-/// @param bucket_capacity Número máximo de registros por bucket
+/// @param capacidade_bucket Número máximo de registros por bucket
+/// @param funcaoFormato Ponteiro para funcao que ira definir o formato do registro no (.hfd).
 /// @return Ponteiro para a configuração criada
 /// @warning
-HashFileConfig criarHashFileConfig(size_t record_size,size_t key_offset,size_t key_size,size_t dir_offset,int bucket_capacity);
+HashFileConfig criarHashFileConfig(size_t record_size,size_t key_offset,size_t key_size,int capacidade_bucket, FuncaoFormatoRegistroDump funcaoFormato);
 
 /// @brief Libera a memória alocada de uma configuração
 /// @param config Ponteiro para a configuração a ser eliminada
@@ -64,36 +67,37 @@ void fecharHashFile(HashFile hashFile);
 /// @brief Insere um novo registro no sistema de hash.
 /// @param hf Ponteiro do hashfile analisado.
 /// @param registro Ponteiro para o registro a ser inserido.
+/// @return 0 para insercao correta , -1 para insercao incorreta
 /// @warning
-void inserirHashFile(HashFile hf, void* registro);
+int inserirHashFile(HashFile hf, void* registro);
 
-/// @brief Pega um registro pela chave (codigo) no hashfile.
+/// @brief Busca um registro pela chave (codigo) no hashfile.
 /// @param hf Ponteiro para o hashfile analisado.
 /// @param chave Ponteiro para a chave a ser buscada.
 /// @param registro_clone Ponteiro onde o registro encontrado será copiado.
-/// @return
+/// @return True se encontrou e False caso contrario.
 /// @warning
-int getHashFile(HashFile hf, void* chave, void* registro_clone);
+int buscarHashFile(HashFile hf, void* chave, void* registro_clone);
 
 /// @brief Remove um registro do sistema de hash conforme a chave.
 /// @param hf Ponteiro para o hashfile analisado.
 /// @param chave Ponteiro para a chave do registro a remover.
 /// @param registro_clone Ponteiro onde o registro removido será copiado
-/// @return
+/// @return 0 para remocao correta , -1 para remocao incorreta
 /// @warning
 int removerHashFile(HashFile hf, void* chave, void* registro_clone);
 
 /// @brief Atualiza um registro existente no hashfile
 /// @param hf Ponteiro para o hashfile analisado
 /// @param registro_novo Ponteiro para o novo registro
-/// @return
+/// @return 0 para atualizacao correta , -1 para atualizacao incorreta
 /// @warning
 int atualizarHashFile(HashFile hf, void* registro_novo);
 
 /// @brief Gera o arquivo de dump (.hfd)
 /// @param hf Ponteiro para o hashfile analisado
 /// @param arquivoPath Caminho do arquivo dump a ser gerado
-/// @return
+/// @return 0 para um dump correto , -1 para um dump incorreto
 /// @warning
 int dumpHashFile(HashFile hf, Nome arquivoPath);
 
@@ -114,5 +118,13 @@ int getNumeroBucketsHF(HashFile hf);
 /// @return Um inteiro que representa o número de registros do hashfile.
 /// @warning
 int getNumeroRegistrosHF(HashFile hf);
+
+/// @brief Percorre todos os registros do hashfile chamando um callback para para registro.
+/// @param hf Ponteiro para o hashfile analisado.
+/// @param callback Função chamada para cada registro do hashfile.
+/// @param ponteiro Ponteiro auxiliar passado para função de callback.
+/// @return Número de registros visitados.
+/// @warning
+int percorrerHash(HashFile hf, void(*callback)(void* registro, void* ponteiro), void* ponteiro);
 
 #endif //HASHFILE_H
