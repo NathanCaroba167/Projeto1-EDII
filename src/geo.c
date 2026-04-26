@@ -9,7 +9,6 @@
 #include <errno.h>
 
 #include "../include/geo.h"
-#include "../include/quadra.h"
 
 #define TAMANHO_MAX_BUFFER 256
 #define COR_MAX 32
@@ -33,9 +32,9 @@ estilo* criarEstiloQuadra(double sw, char* corP, char* corB) {
     e->sw = sw;
 
     strncpy(e->corP,corP,COR_MAX - 1);
-    corP[COR_MAX - 1] = '\0';
+    e->corP[COR_MAX - 1] = '\0';
     strncpy(e->corB,corB,COR_MAX - 1);
-    corB[COR_MAX - 1] = '\0';
+    e->corB[COR_MAX - 1] = '\0';
 
     return e;
 }
@@ -67,7 +66,7 @@ Geo criarGeo(Nome path) {
 int criarQuadrasNoHash(Geo g, HashFile hfQuadras, Arquivo svg) {
     if (g == NULL || hfQuadras == NULL) {
         printf("ERRO: Argumentos NULL em criarQuadrasNoHash.\n");
-        return;
+        return -1;
     }
 
     geoStruct* geo = (geoStruct*)g;
@@ -125,13 +124,23 @@ int criarQuadrasNoHash(Geo g, HashFile hfQuadras, Arquivo svg) {
                     setCorBQuadra(q, geo->estilo->corB);
                     setSWQuadra(q, geo->estilo->sw);
                 }
-                inserirHashFile(hfQuadras,q);
+                if (inserirHashFile(hfQuadras,q) == 0) {
+                    inseridas++;
 
+                    if (svg != NULL) {
+                        desenharQuadraSVG(svg, q);
+                    }
+                }
+
+                eliminarQuadra(q);
             }
         }else {
             printf("Comando desconhecido: '%s'\n", comando);
         }
     }
+    fclose(arquivoGeo);
+    geo->numeroQuadras = inseridas;
+    return inseridas;
 }
 
 void eliminarGeo(Geo geo) {
