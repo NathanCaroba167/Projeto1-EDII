@@ -71,8 +71,9 @@ char* getNomeHabitante(Habitante hab) {
 }
 
 void setNomeHabitante(Habitante hab, char* nome) {
-    strncpy(((habitante*)hab)->nomeHabitante,nome, NOME_MAX - 1);
-
+    habitante* h = (habitante*)hab;
+    strncpy(h->nomeHabitante,nome, NOME_MAX - 1);
+    h->nomeHabitante[NOME_MAX - 1] = '\0';
 }
 
 char* getSobrenomeHabitante(Habitante hab) {
@@ -81,7 +82,9 @@ char* getSobrenomeHabitante(Habitante hab) {
 }
 
 void setSobrenomeHabitante(Habitante hab, char* sobrenome) {
-    strncpy(((habitante*)hab)->sobrenomeHabitante,sobrenome, SOBRENOME_MAX - 1);
+    habitante* h = (habitante*)hab;
+    strncpy(h->sobrenomeHabitante,sobrenome, SOBRENOME_MAX - 1);
+    h->sobrenomeHabitante[SOBRENOME_MAX - 1] = '\0';
 }
 
 char getSexoHabitante(Habitante hab) {
@@ -93,7 +96,7 @@ char* getNascHabitante(Habitante hab) {
     return ((habitante*)hab)->nascimento;
 }
 
-bool ehMorador(Habitante hab) {
+bool isMorador(Habitante hab) {
     return ((habitante*)hab)->morador == true;
 }
 
@@ -119,6 +122,67 @@ void removerEnderecoHabitante(Habitante hab) {
     h->enderecoComplemento[0] = '\0';
     h->enderecoFace = '\0';
     h->enderecoNumero = -1;
+}
+
+char* getCEPEnderecoHabitante(Habitante hab) {
+    habitante* h = (habitante*)hab;
+    if (h->morador) {
+        return NULL;
+    }
+    return h->enderecoCep;
+}
+
+char getFaceEnderecoHabitante(Habitante hab) {
+    habitante* h = (habitante*)hab;
+    if (h->morador) {
+        return '\0';
+    }
+    return h->enderecoFace;
+
+}
+
+int getNumeroEnderecoHabitante(Habitante hab) {
+    habitante* h = (habitante*)hab;
+    if (h->morador) {
+        return -1;
+    }
+    return h->enderecoNumero;
+}
+
+char* getComplementoHabitante(Habitante hab) {
+    habitante* h = (habitante*)hab;
+    if (h->morador) {
+        return NULL;
+    }
+    return h->enderecoComplemento;
+}
+
+void formatoHabitante(void* registro, char* buffer, size_t tamanhoBuffer) {
+    habitante* hab = (habitante*)registro;
+    if (hab->morador) {
+        snprintf(buffer, tamanhoBuffer, "%s | %s | %s | %c | %s | morador | %s/%c/%d %s", hab->cpf, hab->nomeHabitante, hab->sobrenomeHabitante, hab->sexo, hab->nascimento, hab->enderecoCep, hab->enderecoFace, hab->enderecoNumero, hab->enderecoComplemento);
+    }else {
+        snprintf(buffer, tamanhoBuffer, "%s | %s | %s | %c | %s | sem-teto", hab->cpf, hab->nomeHabitante, hab->sobrenomeHabitante, hab->sexo, hab->nascimento);
+    }
+}
+
+HashFileConfig criarHashFileConfigHabitantes(int capacidadeBucket) {
+    return criarHashFileConfig(sizeof(habitante), offsetof(habitante,cpf), sizeof(((habitante*)0)->cpf), capacidadeBucket, formatoHabitante);
+}
+
+void habitanteBufferParaRegistro(Habitante hab, void* buffer) {
+    memcpy(buffer, hab, sizeof(habitante));
+}
+
+Habitante registroParaHabitanteBuffer(void* buffer) {
+    habitante* habitanteBuffer = calloc(1, sizeof(habitante));
+    if(habitanteBuffer == NULL) {
+        return NULL;
+    }
+
+    memcpy(habitanteBuffer, buffer, sizeof(habitante));
+
+    return habitanteBuffer;
 }
 
 void eliminarHabitante(Habitante hab) {
