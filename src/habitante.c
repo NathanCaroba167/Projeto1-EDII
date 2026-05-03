@@ -13,7 +13,7 @@
 #define CPF_MAX 20
 #define NOME_MAX 50
 #define SOBRENOME_MAX 50
-#define NASCIMENTO_MAX 10
+#define NASCIMENTO_MAX 11
 #define CEP_MAX 10
 #define COMPLEMENTO_MAX 10
 
@@ -126,7 +126,7 @@ void removerEnderecoHabitante(Habitante hab) {
 
 char* getCEPEnderecoHabitante(Habitante hab) {
     habitante* h = (habitante*)hab;
-    if (h->morador) {
+    if (h->morador == false) {
         return NULL;
     }
     return h->enderecoCep;
@@ -134,7 +134,7 @@ char* getCEPEnderecoHabitante(Habitante hab) {
 
 char getFaceEnderecoHabitante(Habitante hab) {
     habitante* h = (habitante*)hab;
-    if (h->morador) {
+    if (h->morador == false) {
         return '\0';
     }
     return h->enderecoFace;
@@ -143,7 +143,7 @@ char getFaceEnderecoHabitante(Habitante hab) {
 
 int getNumeroEnderecoHabitante(Habitante hab) {
     habitante* h = (habitante*)hab;
-    if (h->morador) {
+    if (h->morador == false) {
         return -1;
     }
     return h->enderecoNumero;
@@ -151,7 +151,7 @@ int getNumeroEnderecoHabitante(Habitante hab) {
 
 char* getComplementoHabitante(Habitante hab) {
     habitante* h = (habitante*)hab;
-    if (h->morador) {
+    if (h->morador == false) {
         return NULL;
     }
     return h->enderecoComplemento;

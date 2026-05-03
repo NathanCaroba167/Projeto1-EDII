@@ -63,7 +63,7 @@ Geo criarGeo(Nome path) {
     return g;
 }
 
-int criarQuadrasNoHash(Geo g, HashFile hfQuadras, Arquivo svg) {
+int criarQuadrasNoHash(Geo g, HashFile hfQuadras, Arquivo svg1, Arquivo svg2) {
     if (g == NULL || hfQuadras == NULL) {
         printf("ERRO: Argumentos NULL em criarQuadrasNoHash.\n");
         return -1;
@@ -119,16 +119,23 @@ int criarQuadrasNoHash(Geo g, HashFile hfQuadras, Arquivo svg) {
                 double h = atof(h_temp);
 
                 Quadra q = criarQuadra(cep, x, y, w, h);
+                if (q == NULL) {
+                    continue;
+                }
                 if (geo->estilo != NULL) {
                     setCorPQuadra(q, geo->estilo->corP);
                     setCorBQuadra(q, geo->estilo->corB);
                     setSWQuadra(q, geo->estilo->sw);
                 }
-                if (inserirHashFile(hfQuadras,q) == 0) {
+
+                quadraBufferParaRegistro(q, bufferRegistro);
+
+                if (inserirHashFile(hfQuadras,bufferRegistro) == 0) {
                     inseridas++;
 
-                    if (svg != NULL) {
-                        desenharQuadraSVG(svg, q);
+                    if (svg1 != NULL && svg2 != NULL) {
+                        desenharQuadraSVG(svg1, q);
+                        desenharQuadraSVG(svg2, q);
                     }
                 }
 
@@ -141,6 +148,19 @@ int criarQuadrasNoHash(Geo g, HashFile hfQuadras, Arquivo svg) {
     fclose(arquivoGeo);
     geo->numeroQuadras = inseridas;
     return inseridas;
+}
+
+char* getCorPEstilo(Geo g) {
+    return ((geoStruct*)g)->estilo->corP;
+}
+
+char* getCorBEstilo(Geo g) {
+    return ((geoStruct*)g)->estilo->corB;
+
+}
+
+double getSWEstilo(Geo g) {
+    return ((geoStruct*)g)->estilo->sw;
 }
 
 void eliminarGeo(Geo geo) {

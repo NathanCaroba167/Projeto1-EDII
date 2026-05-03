@@ -55,7 +55,7 @@ typedef struct {
     int capacidadeExpansao;
 } hashFile;
 
-uint32_t funcaoHash(void* chave, size_t key_size) {
+uint32_t funcaoHash(void* chave) {
     uint32_t hash = 2166136261u;
     unsigned char* bytes = (unsigned char*) chave;
     size_t length = strlen((char*)chave);
@@ -66,7 +66,7 @@ uint32_t funcaoHash(void* chave, size_t key_size) {
     return hash;
 }
 
-int funcaoComparacao(const void* chave1, const void* chave2, size_t key_size) {
+int funcaoComparacao(const void* chave1, const void* chave2) {
     return strcmp((char*)chave1,(char*)chave2);
 }
 
@@ -88,8 +88,8 @@ void* getChave(void* registro, hashFileConfig* config) {
     return (char*)registro + config->key_offset;
 }
 
-int calculaIndiceDiretorio(void* chave, int profundidade, hashFileConfig* config) {
-    uint32_t h = funcaoHash(chave, config->key_size);
+int calculaIndiceDiretorio(void* chave, int profundidade) {
+    uint32_t h = funcaoHash(chave);
     return (int)(h & ((1u << profundidade) - 1));
 }
 
@@ -101,48 +101,48 @@ int calculaIndiceDiretorio(void* chave, int profundidade, hashFileConfig* config
 
 int leituraBucket(FILE* hf, long offset, int* profundidadeLocal, int* contador, char* bufferSlots, hashFileConfig* config) {
     if (fseek(hf, offset, SEEK_SET) != 0) {
-        return -1;
+        return HF_ERROR;
     }
 
     if (fread(profundidadeLocal, sizeof(int), 1, hf) != 1) {
-        return -1;
+        return HF_ERROR;
     }
 
     if (fread(contador, sizeof(int), 1, hf) != 1) {
-        return -1;
+        return HF_ERROR;
     }
 
     size_t tamanhoSlots = (size_t)config->capacidadeBucket * (1 + config->record_size);
 
     if (fread(bufferSlots, 1, tamanhoSlots, hf) != tamanhoSlots) {
-        return -1;
+        return  HF_ERROR;
     }
 
-    return 0;
+    return HF_OK;
 }
 
 int escritaBucket(FILE* hf, long offset, int profundidadeLocal, int contador, char* bufferSlots, hashFileConfig* config) {
     if (fseek(hf, offset, SEEK_SET) != 0) {
-        return -1;
+        return HF_ERROR;
     }
 
     if (fwrite(&profundidadeLocal, sizeof(int), 1, hf) != 1) {
-        return -1;
+        return HF_ERROR;
     }
 
     if (fwrite(&contador, sizeof(int), 1, hf) != 1) {
-        return -1;
+        return HF_ERROR;
     }
 
     size_t tamanhoSlots = (size_t)config->capacidadeBucket * (1 + config->record_size);
 
     if (fwrite(bufferSlots, 1, tamanhoSlots, hf) != tamanhoSlots) {
-        return -1;
+        return HF_ERROR;
     }
 
     fflush(hf);
 
-    return 0;
+    return HF_OK;
 }
 
 
@@ -167,17 +167,17 @@ int escritaHFC(hashFile* hf) {
     hfdir.key_size = hf->config->key_size;
 
     if (fwrite(&hfdir, sizeof(hashFileCabecalho), 1, hf->hfc) != 1) {
-        return -1;
+        return HF_ERROR;
     }
 
     int tamanhoDiretorio = 1 << hf->profundidadeGlobal;
 
     if (fwrite(hf->diretorio, sizeof(long), (size_t)tamanhoDiretorio, hf->hfc) != (size_t)tamanhoDiretorio) {
-        return -1;
+        return HF_ERROR;
     }
 
     fflush(hf->hfc);
-    return 0;
+    return HF_OK;
 }
 
 int leituraHFC(hashFile* hf) {
@@ -185,7 +185,7 @@ int leituraHFC(hashFile* hf) {
 
     hashFileCabecalho hfdir;
     if (fread(&hfdir, sizeof(hashFileCabecalho), 1, hf->hfc) != 1) {
-        return -1;
+        return HF_ERROR;
     }
 
     hf->profundidadeGlobal = hfdir.profundidadeGlobal;
@@ -197,16 +197,16 @@ int leituraHFC(hashFile* hf) {
     hf->diretorio = malloc((size_t)tamanhoDiretorio * sizeof(long));
 
     if (hf->diretorio == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     if (fread(hf->diretorio, sizeof(long), (size_t)tamanhoDiretorio, hf->hfc) != (size_t)tamanhoDiretorio) {
         free(hf->diretorio);
         hf->diretorio = NULL;
-        return -1;
+        return HF_ERROR;
     }
 
-    return 0;
+    return HF_OK;
 }
 
 
@@ -227,7 +227,7 @@ int expansaoLog(hashFile* hf, int indiceDiretorio, int profundidadeAntiga, int p
         int novaCapacidade = hf->capacidadeExpansao * 2;
         ExpansaoDiretorio* temporario = realloc(hf->expansao, (size_t)novaCapacidade * sizeof(ExpansaoDiretorio));
         if (temporario == NULL) {
-            return -1;
+            return HF_ERROR;
         }
 
         hf->expansao = temporario;
@@ -238,7 +238,7 @@ int expansaoLog(hashFile* hf, int indiceDiretorio, int profundidadeAntiga, int p
     hf->expansao[hf->contadorExpansao].antigaProfundidadeGlobal = profundidadeAntiga;
     hf->expansao[hf->contadorExpansao].novaProfundidadeGlobal = profundidadeNova;
     hf->contadorExpansao++;
-    return 0;
+    return HF_OK;
 }
 
 
@@ -255,7 +255,7 @@ int bucketSplit(hashFile* hf, int indiceDiretorio) {
 
     char* slotsAntigo = malloc(tamanhoSlots);
     if (slotsAntigo == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     int profundidadeLocal;
@@ -264,7 +264,7 @@ int bucketSplit(hashFile* hf, int indiceDiretorio) {
     long antigoOffset = hf->diretorio[indiceDiretorio];
 
     if (leituraBucket(hf->hf, antigoOffset, &profundidadeLocal, &contador, slotsAntigo, config) != 0) {
-        return -1;
+        return HF_ERROR;
     }
 
     if (profundidadeLocal == hf->profundidadeGlobal) {
@@ -275,7 +275,7 @@ int bucketSplit(hashFile* hf, int indiceDiretorio) {
 
         if (novoDiretorio == NULL) {
             free(slotsAntigo);
-            return -1;
+            return HF_ERROR;
         }
 
         hf->diretorio = novoDiretorio;
@@ -291,7 +291,7 @@ int bucketSplit(hashFile* hf, int indiceDiretorio) {
 
     if (fseek(hf->hf, 0, SEEK_END) != 0) {
         free(slotsAntigo);
-        return -1;
+        return HF_ERROR;
     }
     long novoOffset = ftell(hf->hf);
 
@@ -301,7 +301,7 @@ int bucketSplit(hashFile* hf, int indiceDiretorio) {
 
     if (vazio == NULL) {
         free(slotsAntigo);
-        return -1;
+        return HF_ERROR;
     }
 
     escritaBucket(hf->hf, novoOffset, novaProfundidadeLocal, 0, vazio, config);
@@ -325,7 +325,7 @@ int bucketSplit(hashFile* hf, int indiceDiretorio) {
         free(slotsAntigo);
         free(slotsA);
         free(slotsB);
-        return -1;
+        return HF_ERROR;
     }
 
     int contadorA = 0;
@@ -340,7 +340,7 @@ int bucketSplit(hashFile* hf, int indiceDiretorio) {
 
         void* registro = sl + 1;
         void* chave = getChave(registro, config);
-        int indice = calculaIndiceDiretorio(chave, hf->profundidadeGlobal, config);
+        int indice = calculaIndiceDiretorio(chave, hf->profundidadeGlobal);
 
         if (hf->diretorio[indice] == antigoOffset) {
             char* dst = ponteiroSlot(slotsA, contadorA++, config);
@@ -445,8 +445,8 @@ HashFile criarHashFile(Nome arquivoPath, HashFileConfig config) {
     if (hf == NULL) {
         return NULL;
     }
-    printf("DEBUG: caminhoHFC: %s", caminhoHFC);
-    printf("DEBUG: caminhoHF:  %s", caminhoHF);
+    printf("DEBUG: caminhoHFC: %s\n", caminhoHFC);
+    printf("DEBUG: caminhoHF:  %s\n", caminhoHF);
 
     hf->hfc = fopen(caminhoHFC, "w+b");
     hf->hf = fopen(caminhoHF, "w+b");
@@ -576,7 +576,7 @@ void fecharHashFile(HashFile hf) {
 
 int inserirHashFile(HashFile hf, void* registro) {
     if (hf == NULL || registro == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     hashFile* hash = (hashFile*)hf;
@@ -585,29 +585,29 @@ int inserirHashFile(HashFile hf, void* registro) {
     void* chave = getChave(registro, config);
 
     if (buscarHashFile(hf, chave, NULL) == HF_OK) {
-        return 0;
+        return -1;
     }
 
-    int indice = calculaIndiceDiretorio(chave, hash->profundidadeGlobal, config);
+    int indice = calculaIndiceDiretorio(chave, hash->profundidadeGlobal);
     long offset = hash->diretorio[indice];
 
     size_t tamanhoSlots = (size_t)config->capacidadeBucket * (1 + config->record_size);
     char* slots = malloc(tamanhoSlots);
     if (slots == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     int profundidadeLocal;
     int contador;
     if (leituraBucket(hash->hf, offset, &profundidadeLocal, &contador, slots, config) != 0) {
         free(slots);
-        return -1;
+        return HF_ERROR;
     }
 
     if (contador >= config->capacidadeBucket) {
         free(slots);
         if (bucketSplit(hash,indice) != 0) {
-            return -1;
+            return HF_ERROR;
         }
         return inserirHashFile(hf, registro);
     }
@@ -619,7 +619,7 @@ int inserirHashFile(HashFile hf, void* registro) {
 
     if (escritaBucket(hash->hf, offset, profundidadeLocal, contador, slots,config) != 0) {
         free(slots);
-        return -1;
+        return HF_ERROR;
     }
 
     free(slots);
@@ -635,43 +635,43 @@ int inserirHashFile(HashFile hf, void* registro) {
 
 int buscarHashFile(HashFile hf, void* chave, void* registro_clone) {
     if (hf == NULL || chave == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     hashFile* hash = (hashFile*)hf;
     hashFileConfig* config = hash->config;
 
-    int indice = calculaIndiceDiretorio(chave, hash->profundidadeGlobal, config);
+    int indice = calculaIndiceDiretorio(chave, hash->profundidadeGlobal);
     long offset = hash->diretorio[indice];
 
     size_t tamanhoSlots = (size_t)config->capacidadeBucket * (1 + config->record_size);
     char* slots = malloc(tamanhoSlots);
     if (slots == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     int profundidadeLocal;
     int contador;
     if (leituraBucket(hash->hf, offset, &profundidadeLocal, &contador, slots, config) != 0) {
         free(slots);
-        return -1;
+        return HF_ERROR;
     }
 
     for (int i = 0; i < contador; i++) {
         char* sl = ponteiroSlot(slots, i, config);
         void* chaveRegistro = getChave(sl + 1, config);
 
-        if (sl[0] == SLOT_CHEIO && funcaoComparacao(chave, chaveRegistro, config->key_size) == 0) {
+        if (sl[0] == SLOT_CHEIO && funcaoComparacao(chave, chaveRegistro) == 0) {
             if (registro_clone != NULL) {
                 memcpy(registro_clone, sl + 1, config->record_size);
             }
             free(slots);
-            return 0;
+            return HF_OK;
         }
     }
 
     free(slots);
-    return -1;
+    return HF_NAO_ENCONTRADO;
 }
 
 
@@ -684,33 +684,33 @@ int buscarHashFile(HashFile hf, void* chave, void* registro_clone) {
 
 int removerHashFile(HashFile hf, void* chave, void* registro_clone) {
     if (hf == NULL || chave == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     hashFile* hash = (hashFile*)hf;
     hashFileConfig* config = hash->config;
 
-    int indice = calculaIndiceDiretorio(chave, hash->profundidadeGlobal, config);
+    int indice = calculaIndiceDiretorio(chave, hash->profundidadeGlobal);
     long offset = hash->diretorio[indice];
 
     size_t tamanhoSlots = (size_t)config->capacidadeBucket * (1 + config->record_size);
     char* slots = malloc(tamanhoSlots);
     if (slots == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     int profundidadeLocal;
     int contador;
     if (leituraBucket(hash->hf, offset, &profundidadeLocal, &contador, slots, config) != 0) {
         free(slots);
-        return -1;
+        return HF_ERROR;
     }
 
     for (int i = 0; i < contador; i++) {
         char* sl = ponteiroSlot(slots, i, config);
         void* chaveRegistro = getChave(sl + 1, config);
 
-        if (sl[0] == SLOT_CHEIO && funcaoComparacao(chave, chaveRegistro, config->key_size) == 0) {
+        if (sl[0] == SLOT_CHEIO && funcaoComparacao(chave, chaveRegistro) == 0) {
             if (registro_clone != NULL) {
                 memcpy(registro_clone, sl + 1, config->record_size);
             }
@@ -733,7 +733,7 @@ int removerHashFile(HashFile hf, void* chave, void* registro_clone) {
     }
 
     free(slots);
-    return 0;
+    return HF_NAO_ENCONTRADO;
 }
 
 
@@ -744,20 +744,20 @@ int removerHashFile(HashFile hf, void* chave, void* registro_clone) {
 
 int atualizarHashFile(HashFile hf, void* registro_novo) {
     if (hf == NULL || registro_novo == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     hashFile* hash = (hashFile*)hf;
     hashFileConfig* config = hash->config;
 
     void* chave = getChave(registro_novo,config);
-    int indice = calculaIndiceDiretorio(chave, hash->profundidadeGlobal, config);
+    int indice = calculaIndiceDiretorio(chave, hash->profundidadeGlobal);
     long offset = hash->diretorio[indice];
 
     size_t tamanhoSlots = (size_t)config->capacidadeBucket * (1 + config->record_size);
     char* slots = malloc(tamanhoSlots);
     if (slots == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     int profundidadeLocal;
@@ -765,23 +765,23 @@ int atualizarHashFile(HashFile hf, void* registro_novo) {
 
     if (leituraBucket(hash->hf, offset, &profundidadeLocal, &contador, slots, config) != 0) {
         free(slots);
-        return -1;
+        return HF_ERROR;
     }
 
     for (int i = 0; i < contador; i++) {
         char* sl = ponteiroSlot(slots, i, config);
         void* chaveRegistro = getChave(sl + 1, config);
 
-        if (sl[0] == SLOT_CHEIO && funcaoComparacao(chave, chaveRegistro, config->key_size) == 0) {
+        if (sl[0] == SLOT_CHEIO && funcaoComparacao(chave, chaveRegistro) == 0) {
             memcpy(sl + 1,registro_novo, config->record_size);
             escritaBucket(hash->hf, offset, profundidadeLocal, contador, slots, config);
             free(slots);
-            return 0;
+            return HF_OK;
         }
     }
 
     free(slots);
-    return 0;
+    return HF_NAO_ENCONTRADO;
 }
 
 
@@ -793,7 +793,7 @@ int atualizarHashFile(HashFile hf, void* registro_novo) {
 
 int dumpHashFile(HashFile hf, Nome arquivoPath) {
     if (hf == NULL || arquivoPath == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     hashFile* hash = (hashFile*)hf;
@@ -801,7 +801,7 @@ int dumpHashFile(HashFile hf, Nome arquivoPath) {
 
     FILE* f = fopen(arquivoPath, "w");
     if (f == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     int tamanhoDiretorio = 1 << hash->profundidadeGlobal;
@@ -833,7 +833,7 @@ int dumpHashFile(HashFile hf, Nome arquivoPath) {
         free(slots);
         free(formatoBuffer);
         free(visto);
-        return -1;
+        return HF_ERROR;
     }
 
     int contadorVisto = 0;
@@ -903,7 +903,7 @@ int dumpHashFile(HashFile hf, Nome arquivoPath) {
     free(formatoBuffer);
     free(visto);
     fclose(f);
-    return 0;
+    return HF_OK;
 }
 
 
@@ -912,7 +912,7 @@ int dumpHashFile(HashFile hf, Nome arquivoPath) {
 
 int getProfundidadeGlobalHF(HashFile hf) {
     if (hf == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     return ((hashFile*)hf)->profundidadeGlobal;
@@ -921,7 +921,7 @@ int getProfundidadeGlobalHF(HashFile hf) {
 
 int getNumeroBucketsHF(HashFile hf) {
     if (hf == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     return ((hashFile*)hf)->contadorBucket;
@@ -930,7 +930,7 @@ int getNumeroBucketsHF(HashFile hf) {
 
 int getNumeroRegistrosHF(HashFile hf) {
     if (hf == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     return ((hashFile*)hf)->contadorRegistro;
@@ -946,7 +946,7 @@ int getNumeroRegistrosHF(HashFile hf) {
 
 int percorrerHash(HashFile hf, void(*callback)(void* registro, void* structAuxiliar), void* structAuxiliar) {
     if (hf == NULL || callback == NULL) {
-        return -1;
+        return HF_ERROR;
     }
 
     hashFile* hash = (hashFile*)hf;
@@ -960,7 +960,7 @@ int percorrerHash(HashFile hf, void(*callback)(void* registro, void* structAuxil
     if (offsets == NULL || slots == NULL) {
         free(offsets);
         free(slots);
-        return -1;
+        return HF_ERROR;
     }
 
     int contadorOff = 0;
@@ -983,7 +983,7 @@ int percorrerHash(HashFile hf, void(*callback)(void* registro, void* structAuxil
     if (registroBuffer == NULL) {
         free(offsets);
         free(slots);
-        return -1;
+        return HF_ERROR;
     }
 
     for (int b = 0; b < contadorOff; b++) {

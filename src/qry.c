@@ -161,6 +161,7 @@ void comandoRq(char* cep, HashFile hfQuadras, HashFile hfHabitantes, Arquivo svg
 
     double x = getXQuadra(qdr);
     double y = getYQuadra(qdr);
+    double h = getHQuadra(qdr);
     eliminarQuadra(qdr);
 
     if (removerHashFile(hfQuadras, cep, NULL) != 0) {
@@ -194,7 +195,7 @@ void comandoRq(char* cep, HashFile hfQuadras, HashFile hfHabitantes, Arquivo svg
     free(cm.cpfs);
 
     if (svg) {
-        desenharXVermelhoSVG(svg, x, y);
+        desenharXVermelhoSVG(svg, x, y - h);
     }
 }
 
@@ -279,7 +280,7 @@ void comandoNasc(char* cpf, char* nome, char* sobrenome, char sexo, char* nascim
     fprintf(txt, "Nascimento habitante: %s\n", cpf);
 }
 
-void comandoRip(char* cpf, HashFile hfHabitantes, Arquivo svg, Arquivo txt) {
+void comandoRip(char* cpf, HashFile hfQuadras, HashFile hfHabitantes, Arquivo svg, Arquivo txt) {
     char buffer[TAMANHO_MAX_BUFFER_REGISTRO];
 
     if (buscarHashFile(hfHabitantes, cpf, buffer) != 0) {
@@ -295,7 +296,17 @@ void comandoRip(char* cpf, HashFile hfHabitantes, Arquivo svg, Arquivo txt) {
     escreverHabitante(txt, getCPFHabitante(hab), getNomeHabitante(hab), getSobrenomeHabitante(hab), getSexoHabitante(hab), getNascHabitante(hab), isMorador(hab), getCEPEnderecoHabitante(hab), getFaceEnderecoHabitante(hab), getNumeroEnderecoHabitante(hab), getComplementoHabitante(hab));
 
     if (svg && isMorador(hab)) {
-        desenharCruzSVG(svg, getNumeroEnderecoHabitante(hab), 0.0);
+        char bufferQuadra[TAMANHO_MAX_BUFFER_REGISTRO];
+        if (buscarHashFile(hfQuadras, getCEPEnderecoHabitante(hab), bufferQuadra) == 0) {
+            Quadra q = registroParaQuadraBuffer(bufferQuadra);
+            if (q != NULL) {
+                double px;
+                double py;
+                posicaoFaceNaQuadra(getXQuadra(q), getYQuadra(q), getWQuadra(q), getHQuadra(q),getFaceEnderecoHabitante(hab), &px, &py);
+                desenharCruzSVG(svg, px, py);
+                eliminarQuadra(q);
+            }
+        }
     }
 
     removerHashFile(hfHabitantes, cpf, NULL);
@@ -347,6 +358,7 @@ void comandoDspj(char* cpf, HashFile hfQuadras, HashFile hfHabitantes, Arquivo s
     if (hab == NULL) {
         return;
     }
+    printf("DEBUB: Endereco: %s/%c/%d %s\n", getCEPEnderecoHabitante(hab), getFaceEnderecoHabitante(hab), getNumeroEnderecoHabitante(hab), getComplementoHabitante(hab));
 
     escreverHabitante(txt, getCPFHabitante(hab), getNomeHabitante(hab), getSobrenomeHabitante(hab), getSexoHabitante(hab), getNascHabitante(hab), isMorador(hab), getCEPEnderecoHabitante(hab), getFaceEnderecoHabitante(hab), getNumeroEnderecoHabitante(hab), getComplementoHabitante(hab));
 
@@ -441,7 +453,7 @@ void LerComandosExecutar(Arquivo svg,Arquivo txt,Arquivo qry,HashFile hfQuadras,
             char* cpf = strtok(NULL," ");
 
             if (cpf) {
-                comandoRip(cpf, hfHabitantes, svg, txt);
+                comandoRip(cpf, hfQuadras, hfHabitantes, svg, txt);
                 executados++;
             }
         }else if (strcmp(comando, "mud") == 0) {

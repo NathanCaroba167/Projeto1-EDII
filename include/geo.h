@@ -28,10 +28,29 @@ Geo criarGeo(Nome path);
 /// @brief Cria quadras e estilo lidos do (.geo) e coloca as quadras no hashfile.
 /// @param g Ponteiro para o arquivo (.geo) que será lido.
 /// @param hfQuadras Ponteiro para o Hashfile que receberá as quadras.
-/// @param svg Arquivo svg onde será desenhado as quadras
+/// @param svg1 Arquivo svg inicial onde será desenhado as quadras
+/// @param svg2 Arquivo svg final onde será desenhado as quadras
 /// @return Número de quadras inseridas.
 /// @warning
-int criarQuadrasNoHash(Geo g, HashFile hfQuadras, Arquivo svg);
+int criarQuadrasNoHash(Geo g, HashFile hfQuadras, Arquivo svg1, Arquivo svg2);
+
+/// @brief Pega a cor de preenchimento definido do (.geo) sem modifica-la.
+/// @param g Ponteiro para o arquivo (.geo) analisado.
+/// @return Uma string com a cor de preenchimento definido do geo.
+/// @warning
+char* getCorPEstilo(Geo g);
+
+/// @brief Pega a cor de borda definido do (.geo) sem modifica-la.
+/// @param g Ponteiro para o arquivo (.geo) analisado.
+/// @return Uma string com a cor de borda definido do geo.
+/// @warning
+char* getCorBEstilo(Geo g);
+
+/// @brief Pega a espessura de borda definido do (.geo) sem modifica-la.
+/// @param g Ponteiro para o arquivo (.geo) analisado.
+/// @return  Um double que representa a espessura da borda definido do geo.
+/// @warning
+double getSWEstilo(Geo g);
 
 /// @brief Libera a memória alocada para o geo.
 /// @param geo Ponteiro para o geo que será eliminado.

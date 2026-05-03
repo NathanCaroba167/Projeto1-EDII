@@ -39,9 +39,9 @@ void desenharCirculoSVG(Arquivo svg, double x, double y) {
                  "/>\n",
                  x,
                  y,
-                 1.0,
+                 4.0,
                  0.5,
-                 1.5);
+                 1.0);
 }
 
 void desenharQuadraSVG(Arquivo svg, Quadra q) {
@@ -56,20 +56,20 @@ void desenharQuadraSVG(Arquivo svg, Quadra q) {
                  "stroke-width=\"%lf\" "
                  "/>\n",
                  getXQuadra(q),
-                 getYQuadra(q),
+                 getYQuadra(q) - getHQuadra(q),
                  getWQuadra(q),
                  getHQuadra(q),
                  getCorBQuadra(q),
                  getCorPQuadra(q),
                  0.5,
-                 1.5);
+                 getSWQuadra(q));
 
 }
 
 void desenharCruzSVG(Arquivo svg, double x, double y) {
     if (svg == NULL) return;
 
-    double tamanhoCruz = 1;
+    double tamanhoCruz = 4.0;
     fprintf(svg, "\t<line x1=\"%lf\" "
                  "y1=\"%lf\" "
                  "x2=\"%lf\" "
@@ -81,7 +81,7 @@ void desenharCruzSVG(Arquivo svg, double x, double y) {
                  y - tamanhoCruz,
                  x,
                  y + tamanhoCruz,
-                 1.5);
+                 1.0);
 
     fprintf(svg, "\t<line x1=\"%lf\" "
                  "y1=\"%lf\" "
@@ -94,14 +94,14 @@ void desenharCruzSVG(Arquivo svg, double x, double y) {
                  y,
                  x + tamanhoCruz,
                  y,
-                 1.5);
+                 1.0);
 
 }
 
 void desenharXVermelhoSVG(Arquivo svg, double x, double y) {
     if (svg == NULL) return;
 
-    double tamanhoX = 1;
+    double tamanhoX = 4.0;
     fprintf(svg, "\t<line x1=\"%lf\" "
                  "y1=\"%lf\" "
                  "x2=\"%lf\" "
@@ -113,7 +113,7 @@ void desenharXVermelhoSVG(Arquivo svg, double x, double y) {
                  y - tamanhoX,
                  x + tamanhoX,
                  y + tamanhoX,
-                 1.5);
+                 1.0);
 
     fprintf(svg, "\t<line x1=\"%lf\" "
                  "y1=\"%lf\" "
@@ -126,7 +126,7 @@ void desenharXVermelhoSVG(Arquivo svg, double x, double y) {
                  y - tamanhoX,
                  x - tamanhoX,
                  y + tamanhoX,
-                 1.5);
+                 1.0);
 
 }
 
@@ -135,7 +135,7 @@ void desenharTextoSVG(Arquivo svg, double x, double y, char* texto, char* cor, i
     fprintf(svg, "\t<text x=\"%lf\" "
                  "y=\"%lf\" "
                  "fill=\"%s\" "
-                 "font-size=\"%dpt\" "
+                 "font-size=\"%d\" "
                  "text-anchor=\"middle\" "
                  ">%s</text>\n",
                  x,
@@ -148,7 +148,7 @@ void desenharTextoSVG(Arquivo svg, double x, double y, char* texto, char* cor, i
 
 void desenharQuadradoVermelhoSVG(Arquivo svg, double x, double y, char* Cpf) {
     if (svg == NULL) return;
-    double tamanhoLadoQuadrado = 1;
+    double tamanhoLadoQuadrado = 10.0;
     fprintf(svg, "\t<rect x=\"%lf\" "
                  "y=\"%lf\" "
                  "width=\"%lf\" "
@@ -163,7 +163,7 @@ void desenharQuadradoVermelhoSVG(Arquivo svg, double x, double y, char* Cpf) {
                  tamanhoLadoQuadrado,
                  tamanhoLadoQuadrado,
                  0.5,
-                 1.5);
+                 1.0);
 
     fprintf(svg, "\t<text x=\"%lf\" "
                  "y=\"%lf\" "
@@ -171,8 +171,8 @@ void desenharQuadradoVermelhoSVG(Arquivo svg, double x, double y, char* Cpf) {
                  "font-size=\"3px\" "
                  "text-anchor=\"middle\" "
                  ">%s</text>\n",
-                 x + 1,
-                 y + tamanhoLadoQuadrado - 1,
+                 x + 0.5,
+                 y + tamanhoLadoQuadrado - 0.5,
                  Cpf);
 }
 

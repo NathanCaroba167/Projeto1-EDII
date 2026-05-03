@@ -128,6 +128,12 @@ void setSWQuadra(Quadra q,double sw);
 /// @warning
 HashFileConfig criarHashFileConfigQuadras(int capacidadeBucket);
 
+/// @brief Escreve em um buffer uma quadra para inserção como registro no hashfile
+/// @param q Ponteiro para a quadra analisado.
+/// @param buffer Buffer de registro que receberá a quadra para registro no hashfile.
+/// @warning
+void quadraBufferParaRegistro(Quadra q, void* buffer);
+
 /// @brief Cria uma quadra a partir de um buffer de registro lido do hashfile
 /// @param buffer Buffer de registro lido do hashfile.
 /// @return Ponteiro para a quadra criada.

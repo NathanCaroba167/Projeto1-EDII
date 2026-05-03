@@ -12,12 +12,12 @@
  Módulo encarregado de gerenciar um Hashfile Dinâmino (Hashing Extensível) em disco(arquivo binário),
  com operações de criar, abrir, fechar, inserir, buscar, remover, atualizar e dump.
  O módulo é genérico: opera sobre registros de tamanho fixo sem conhecer o tipo concreto.
- A localização da chave dentro do registro é configurada via HashFileConfig (offsetof/sizeof)
+ A localização da chave dentro do registro é configurada via HashFileConfig (offsetof/sizeof) */
 
 /* Códigos de retorno das operações*/
 #define HF_OK 0
-
 #define HF_ERROR (-1)
+#define HF_NAO_ENCONTRADO (-2)
 
 typedef void (*FuncaoFormatoRegistroDump)(void* registro, char* buffer, size_t tamanhoBuffer);
 

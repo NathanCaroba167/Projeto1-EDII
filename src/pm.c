@@ -127,7 +127,7 @@ int criarHabitantesEMoradores(Arquivo p, HashFile hfHabitantes) {
     fclose(arquivoPm);
     pm->numeroHabitantes = inseridos;
     pm->numeroMoradores = moradores;
-    printf("DEBUB: numero de habitantes: %d e Moradores: %d",pm->numeroHabitantes,pm->numeroMoradores);
+    printf("DEBUB: numero de habitantes: %d e Moradores: %d\n",pm->numeroHabitantes,pm->numeroMoradores);
     return inseridos;
 }
 

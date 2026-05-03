@@ -25,7 +25,7 @@ typedef struct {
 }quadra;
 
 Quadra criarQuadra(char* cep,double x,double y,double w,double h) {
-    quadra* q = (quadra*)malloc(sizeof(quadra));
+    quadra* q = calloc(1,sizeof(quadra));
 
     if(q == NULL) {
         printf("Erro ao alocar memória ao criarQuadra!\n");
@@ -142,6 +142,10 @@ void formatoQuadra(void* registro, char* buffer, size_t tamanhoBuffer) {
 
 HashFileConfig criarHashFileConfigQuadras(int capacidadeBucket) {
     return criarHashFileConfig(sizeof(quadra), offsetof(quadra,cep), sizeof(((quadra*)0)->cep), capacidadeBucket, formatoQuadra);
+}
+
+void quadraBufferParaRegistro(Quadra q, void* buffer) {
+    memcpy(buffer, q, sizeof(quadra));
 }
 
 Quadra registroParaQuadraBuffer(void* buffer) {

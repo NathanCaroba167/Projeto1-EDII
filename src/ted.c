@@ -110,7 +110,6 @@ int main(int argc, char* argv[]) {
 
         printf("DEBUG: Tentando abrir o arquivo QRY no caminho: [%s]\n", caminhoCompletoQry);
 
-
         char* nomeBaseQry = getNomeBase(nomeArqQry);
         if (nomeBaseQry ==  NULL) {
             free(nomeBaseGeo);
@@ -156,6 +155,10 @@ int main(int argc, char* argv[]) {
     arqSvgInicial = abrirSVG(caminhoSaidaSvgInicial);
     inicializarSVG(arqSvgInicial);
 
+    Arquivo arqSvgFinal = NULL;
+    arqSvgFinal = abrirSVG(caminhoSaidaSvgFinal);
+    inicializarSVG(arqSvgFinal);
+
     // Execução do fluxo .geo
     Geo arqGeo = criarGeo(caminhoCompletoGeo);
     if (arqGeo == NULL) {
@@ -163,7 +166,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    criarQuadrasNoHash(arqGeo, hfQuadras, arqSvgInicial);
+    criarQuadrasNoHash(arqGeo, hfQuadras, arqSvgInicial,arqSvgFinal);
     fecharSVG(arqSvgInicial);
     eliminarGeo(arqGeo);
 
@@ -180,9 +183,6 @@ int main(int argc, char* argv[]) {
         arqQry = abrirQry(caminhoCompletoQry);
         Arquivo arqTxt = NULL;
         arqTxt = abrirTXT(caminhoSaidaTxt);
-        Arquivo arqSvgFinal = NULL;
-        arqSvgFinal = abrirSVG(caminhoSaidaSvgFinal);
-        inicializarSVG(arqSvgFinal);
         if (arqQry == NULL) {
             printf("ERRO: ao tentar abrir o arquivo .qry");
             fecharHashFile(hfQuadras);
@@ -198,7 +198,6 @@ int main(int argc, char* argv[]) {
         fclose(arqTxt);
 
         fecharSVG(arqSvgFinal);
-        fclose(arqSvgFinal);
     }
 
     dumpHashFile(hfQuadras, caminhoHFDQuadras);
